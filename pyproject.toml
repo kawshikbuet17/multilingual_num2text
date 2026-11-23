@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "multilingual-num2text"
+version = "0.1.0"
+description = "Convert numbers in text to words: amounts, money, phone numbers, dates, times, codes and more. Bangla and English built in."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "Kawshik Kumar Paul" }]
+keywords = ["number to words", "num2words", "bangla", "bengali", "text normalization", "multilingual"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+    "Natural Language :: Bengali",
+    "Natural Language :: English",
+    "Topic :: Text Processing :: Linguistic",
+]
+
+[project.urls]
+Homepage = "https://github.com/kawshikbuet17/multilingual_num2text"
+Issues = "https://github.com/kawshikbuet17/multilingual_num2text/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
