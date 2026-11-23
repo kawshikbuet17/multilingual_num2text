@@ -123,7 +123,7 @@ class BanglaWordTableTest(unittest.TestCase):
         for month, name in enumerate(BANGLA_MONTHS, start=1):
             with self.subTest(month=month):
                 self.assertEqual(self.bangla.to_date(1, month), f"পহেলা {name}")
-                self.assertEqual(convert_text(f"০১/{month:02d}/২০২৪", "bn"), f"পহেলা {name} দুই হাজার চব্বিশ")
+                self.assertEqual(convert_text(f"১৩/{month:02d}/২০২৪", "bn"), f"তেরোই {name} দুই হাজার চব্বিশ")
 
     def test_bangla_calendar_months(self):
         for name in "বৈশাখ জ্যৈষ্ঠ আষাঢ় শ্রাবণ ভাদ্র আশ্বিন কার্তিক অগ্রহায়ণ পৌষ মাঘ ফাল্গুন চৈত্র".split():
@@ -239,7 +239,7 @@ class EnglishWordTableTest(unittest.TestCase):
     def test_every_month(self):
         for month, name in enumerate(ENGLISH_MONTHS, start=1):
             with self.subTest(month=month):
-                self.assertEqual(convert_text(f"01/{month:02d}/2024", "en"), f"the first of {name}, twenty twenty-four")
+                self.assertEqual(convert_text(f"13/{month:02d}/2024", "en"), f"the thirteenth of {name}, twenty twenty-four")
                 self.assertEqual(convert_text(f"{name} 1", "en"), f"{name} first")
                 self.assertEqual(convert_text(f"{name[:3]} 1", "en"), f"{name} first")
 
@@ -281,6 +281,32 @@ class EnglishWordTableTest(unittest.TestCase):
         for written, spoken in cases.items():
             with self.subTest(written=written):
                 self.assertEqual(convert_text(written, "en"), spoken)
+
+
+class AmbiguousDateTest(unittest.TestCase):
+    """Day and month both 12 or less: different numbers are read as written, equal numbers with the month name."""
+
+    def test_every_day_month_pair(self):
+        for first in range(1, 13):
+            for second in range(1, 13):
+                with self.subTest(first=first, second=second):
+                    if first == second:
+                        bangla = f"{BANGLA_DATE_DAYS[first - 1]} {BANGLA_MONTHS[first - 1]} দুই হাজার চব্বিশ"
+                        english = f"the {ENGLISH_ORDINALS_1_TO_31[first - 1]} of {ENGLISH_MONTHS[first - 1]}, twenty twenty-four"
+                    else:
+                        bangla = f"{BANGLA_0_TO_99[first]} {BANGLA_0_TO_99[second]} দুই হাজার চব্বিশ"
+                        english = f"{ENGLISH_0_TO_99[first]} {ENGLISH_0_TO_99[second]} twenty twenty-four"
+                    for separator in "/-.":
+                        written = f"{first:02d}{separator}{second:02d}{separator}2024"
+                        self.assertEqual(convert_text(to_bangla_digits(written), lang="bn"), bangla)
+                        self.assertEqual(convert_text(written, lang="en"), english)
+                    self.assertEqual(convert_text(f"{first}/{second}/2024", lang="en"), english)
+
+    def test_iso_order_keeps_month_names(self):
+        for month in range(1, 13):
+            with self.subTest(month=month):
+                self.assertEqual(convert_text(f"2024-{month:02d}-05", lang="en"), f"the fifth of {ENGLISH_MONTHS[month - 1]}, twenty twenty-four")
+                self.assertEqual(convert_text(to_bangla_digits(f"2024-{month:02d}-05"), lang="bn"), f"পাঁচই {BANGLA_MONTHS[month - 1]} দুই হাজার চব্বিশ")
 
 
 class NoDigitsLeftTest(unittest.TestCase):

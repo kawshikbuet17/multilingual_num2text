@@ -56,6 +56,10 @@ MONTH_ABBREVIATIONS = {
     "Jan": "January", "Feb": "February", "Mar": "March", "Apr": "April", "Jun": "June", "Jul": "July",
     "Aug": "August", "Sep": "September", "Sept": "September", "Oct": "October", "Nov": "November", "Dec": "December",
 }
+BANGLA_MONTH_NAMES = {
+    "জানুয়ারি": 1, "জানুয়ারী": 1, "ফেব্রুয়ারি": 2, "ফেব্রুয়ারী": 2, "মার্চ": 3, "এপ্রিল": 4, "মে": 5, "জুন": 6,
+    "জুলাই": 7, "আগস্ট": 8, "আগষ্ট": 8, "সেপ্টেম্বর": 9, "অক্টোবর": 10, "নভেম্বর": 11, "ডিসেম্বর": 12,
+}
 DATE_FORMAT = "the {day} of {month}"
 DATE_WITH_YEAR_FORMAT = "the {day} of {month}, {year}"
 MONTH_FIRST_DATE_FORMAT = "{month} {day}"

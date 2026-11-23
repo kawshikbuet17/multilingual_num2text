@@ -20,7 +20,7 @@ No other dependencies are needed.
 Open an [issue](https://github.com/kawshikbuet17/multilingual_num2text/issues) with the input, the language, what you got and what you expected:
 
 ```
-convert_text("১০:৩০ PM", "bn")
+convert_text("১০:৩০ PM", lang="bn")
 got:      ...
 expected: রাত দশটা ত্রিশ মিনিট
 ```
@@ -37,6 +37,8 @@ Where things go:
 |---|---|
 | A word or pronunciation | `languages/<lang>/vocabulary.py` |
 | A unit, acronym, phrase or setting | `languages/<lang>/lexicon.py` |
+| An abbreviation (`Mr.`), sentence end mark, code keyword (`OTP`) or duration word | `languages/<lang>/lexicon.py` |
+| How `lang="auto"` detects languages or splits sentences | `core/detection.py` |
 | A currency name | `languages/<lang>/currencies.py` |
 | A currency code or symbol | `core/currencies.py` |
 | A rule only one language needs | `languages/<lang>/rules.py` |
@@ -46,7 +48,8 @@ Where things go:
 
 1. Copy `languages/english/` to `languages/<name>/`.
 2. Fill `vocabulary.py` (words), `lexicon.py` (units, phrases) and `currencies.py` (names for the codes in `core/currencies.py`).
-3. Implement the five methods in `language.py`: `to_cardinal`, `to_ordinal`, `to_year`, `to_date`, `to_time`.
+3. Implement the five methods in `language.py`: `to_cardinal`, `to_ordinal`, `to_year`, `to_date`, `to_time`,
+   and set `script` to the language's Unicode range so `lang="auto"` can detect it.
 4. Register it in `src/multilingual_num2text/__init__.py` and add a `<NAME>_CASES` table with tests.
 
 ## Guidelines

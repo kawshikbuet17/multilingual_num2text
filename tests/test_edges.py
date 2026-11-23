@@ -46,11 +46,64 @@ class InvalidValueTest(unittest.TestCase):
     def test_month_first_fallback(self):
         self.assertEqual(convert_text("১০/১৩/২০২৪", "bn"), "তেরোই অক্টোবর দুই হাজার চব্বিশ")
         self.assertEqual(convert_text("12/25/2024", "en"), "the twenty-fifth of December, twenty twenty-four")
-        self.assertEqual(convert_text("05/10/2024", "en"), "the fifth of October, twenty twenty-four")
+        self.assertEqual(convert_text("05/10/2024", "en"), "five ten twenty twenty-four")
 
-    def test_two_digit_year_needs_padded_day_and_month(self):
-        self.assertEqual(convert_text("৬/১২/২৪", "bn"), "ছয়, বারো, চব্বিশ")
-        self.assertEqual(convert_text("০৬/১২/২৪", "bn"), "ছয়ই ডিসেম্বর চব্বিশ")
+    def test_short_dates_without_zero_padding(self):
+        cases = [
+            ("en", "2/3/24", "two three twenty-four"),
+            ("en", "2/4/2024", "two four twenty twenty-four"),
+            ("en", "12/3/24", "twelve three twenty-four"),
+            ("en", "13/2/24", "the thirteenth of February, twenty-four"),
+            ("en", "2/13/24", "the thirteenth of February, twenty-four"),
+            ("en", "6/12/24", "six twelve twenty-four"),
+            ("en", "02/03/24", "two three twenty-four"),
+            ("en", "3/3/24", "the third of March, twenty-four"),
+            ("en", "25/12/24", "the twenty-fifth of December, twenty-four"),
+            ("bn", "২/৩/২৪", "দুই তিন চব্বিশ"),
+            ("bn", "২/৪/২০২৪", "দুই চার দুই হাজার চব্বিশ"),
+            ("bn", "১২/৩/২৪", "বারো তিন চব্বিশ"),
+            ("bn", "৩/৩/২৪", "তেসরা মার্চ চব্বিশ"),
+            ("bn", "২৫/১২/২৪", "পঁচিশে ডিসেম্বর চব্বিশ"),
+            ("bn", "১৩/২/২৪", "তেরোই ফেব্রুয়ারি চব্বিশ"),
+            ("bn", "২/১৩/২৪", "তেরোই ফেব্রুয়ারি চব্বিশ"),
+            ("bn", "৬/১২/২৪", "ছয় বারো চব্বিশ"),
+            ("bn", "০৬/১২/২৪", "ছয় বারো চব্বিশ"),
+        ]
+        for lang, written, spoken in cases:
+            with self.subTest(lang=lang, written=written):
+                self.assertEqual(convert_text(written, lang=lang), spoken)
+
+    def test_short_date_shape_before_a_duration_is_a_list(self):
+        cases = [
+            ("en", "6/12/24 months", "six, twelve, twenty-four months"),
+            ("en", "6/12/24 Months", "six, twelve, twenty-four Months"),
+            ("en", "6/12/24 month plan", "six, twelve, twenty-four month plan"),
+            ("en", "3/6/12 installments", "three, six, twelve installments"),
+            ("en", "1/2/3 years", "one, two, three years"),
+            ("en", "7/14/21 days", "seven, fourteen, twenty-one days"),
+            ("bn", "৬/১২/২৪ মাস", "ছয়, বারো, চব্বিশ মাস"),
+            ("bn", "৬/১২/২৪ মাসের কিস্তি", "ছয়, বারো, চব্বিশ মাসের কিস্তি"),
+            ("bn", "৩/৬/১২ কিস্তি", "তিন, ছয়, বারো কিস্তি"),
+            ("bn", "১/২/৩ বছর", "এক, দুই, তিন বছর"),
+            ("bn", "৭/১৪/২১ দিন", "সাত, চৌদ্দ, একুশ দিন"),
+        ]
+        for lang, written, spoken in cases:
+            with self.subTest(lang=lang, written=written):
+                self.assertEqual(convert_text(written, lang=lang), spoken)
+
+    def test_short_date_shape_that_is_not_a_date(self):
+        cases = [
+            ("en", "31/2/24", "thirty-one, two, twenty-four"),
+            ("en", "13/13/24", "thirteen, thirteen, twenty-four"),
+            ("en", "2-3-24", "two three two four"),
+            ("en", "2.3.24", "two dot three dot twenty-four"),
+            ("bn", "৩১/২/২৪", "একত্রিশ, দুই, চব্বিশ"),
+            ("bn", "২-৩-২৪", "দুই তিন দুই চার"),
+            ("bn", "২.৩.২৪", "দুই ডট তিন ডট চব্বিশ"),
+        ]
+        for lang, written, spoken in cases:
+            with self.subTest(lang=lang, written=written):
+                self.assertEqual(convert_text(written, lang=lang), spoken)
 
     def test_impossible_times_fall_back(self):
         cases = {
@@ -123,7 +176,7 @@ class SettingBoundaryTest(unittest.TestCase):
 
 class UnicodeTest(unittest.TestCase):
     def test_both_forms_of_bangla_nukta_letters(self):
-        for ya in ("য়", "য়"):
+        for ya in ("\u09df", "\u09af\u09bc"):
             with self.subTest(form=[hex(ord(char)) for char in ya]):
                 self.assertEqual(convert_text(f"২{ya} স্থান, ১০০ টাকা{ya}", "bn"), "দ্বিতীয় স্থান, একশত টাকায়")
 

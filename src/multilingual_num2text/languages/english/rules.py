@@ -16,7 +16,8 @@ if TYPE_CHECKING:
 _MONTH_FORMS = {name: index for index, name in enumerate(vocab.MONTHS, start=1)}
 _MONTH_FORMS.update({short: vocab.MONTHS.index(full) + 1 for short, full in vocab.MONTH_ABBREVIATIONS.items()})
 _MONTH_FORMS.update({name.upper(): index for name, index in list(_MONTH_FORMS.items())})
-_MONTH = rf"(?P<month>{alternation(_MONTH_FORMS)})\.?(?![A-Za-z])"
+_MONTH_FORMS.update(vocab.BANGLA_MONTH_NAMES)
+_MONTH = rf"(?P<month>{alternation(_MONTH_FORMS)})\.?(?![A-Za-z]|[ঀ-৥ৰ-৿])"
 _ORDINAL_SUFFIX = r"(?:st|nd|rd|th)?"
 _YEAR = r"(?:,?\s(?P<year>\d{4})(?!\d|[.,]\d))?"
 

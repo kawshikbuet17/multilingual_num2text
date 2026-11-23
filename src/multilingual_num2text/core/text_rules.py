@@ -124,5 +124,5 @@ class TextRules:
         text = re.sub(r"[()\[\]{}【】]", " ", text)
         text = re.sub(r"[*#@&+=<>|~^_/]", " ", text)
         text = re.sub(r"।\s*।", "।", text)
-        text = re.sub(r"\s+([,।?!.])", r"\1", text)
+        text = re.sub(r"\s+([,।?!.;:])", r"\1", text)
         return re.sub(r"\s+", " ", text).strip()

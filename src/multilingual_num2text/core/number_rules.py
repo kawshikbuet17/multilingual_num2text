@@ -34,13 +34,14 @@ _CARD_NUMBER = re.compile(r"(?<!\d)\d{4}(?: \d{4}){3}(?!\d)")
 _YEAR_SPAN = re.compile(r"(?<![\d./-])(\d{4})[-–/](\d{2})(?!\d|[-/.]\d)")
 _DAY_MONTH_YEAR = re.compile(r"(?<![\d./-])(\d{1,2})([/.-])(\d{1,2})\2(\d{4}|\d{2})(?!\d|[/.-]\d)")
 _YEAR_MONTH_DAY = re.compile(r"(?<![\d./-])(\d{4})([/.-])(\d{1,2})\2(\d{1,2})(?!\d|[/.-]\d)")
-_CLOCK_WITH_PERIOD = re.compile(r"(?<![\d:.])(\d{1,2})(?::(\d{2})(?::(\d{2}))?)?\s?([AaPp])\.?[Mm]\.?(?![A-Za-z])")
+_CLOCK_WITH_PERIOD = re.compile(r"(?<![\d:.])(\d{1,2})(?:[:.](\d{2})(?:[:.](\d{2}))?)?\s?([AaPp])\.?[Mm]\.?(?![A-Za-z])")
 _CLOCK_TIME = re.compile(r"(?<![\d:])(\d{1,2}):(\d{2})(?::(\d{2}))?(?![\d:])")
 _AREA_CODE = re.compile(rf"(?<!\w)\(([{ZERO_DIGITS}]\d{{1,4}})\)\s?(?=\d)")
 _ARITHMETIC = re.compile(r"(?<=\d)\s?([+×÷=])\s?(?=[-−]?\d)")
 _MORE_THAN = re.compile(r"(?<=\d)\+(?![\d+])")
 _MIXED_FRACTION = re.compile(r"(?<![\d.])(\d+)?\s?([½¼¾])")
 _LEADING_DOT_DECIMAL = re.compile(r"(?:^|(?<=[\s(]))(?P<sign>[-−])?\.(?P<fraction>\d+)(?!\d|\.\d)", re.MULTILINE)
+_LETTER_MARK = r"[̀-ͯऀ-෿]"
 _LETTER_BEFORE_DIGIT = re.compile(rf"(?<=[{WORD_CHARS}])(?<![\d_])(?=\d)")
 _RATIO = re.compile(r"(?<![\d:])\d+(?::\d+)+(?![\d:])")
 _PHONE = re.compile(rf"(?<![{WORD_CHARS}.,+/])(?<!\d-)(?:\+\d|[{ZERO_DIGITS}]\d)(?:\d|[ -](?=\d))*(?!\d|[.,]\d)")
@@ -87,7 +88,7 @@ class NumberRules:
         )
         prefix_alternatives = [f"(?:{alternation(prefix_signs)})"] if prefix_signs else []
         if prefix_words:
-            prefix_alternatives.append(f"(?<![A-Za-z])(?:{alternation(prefix_words)})")
+            prefix_alternatives.append(f"(?<![A-Za-z])(?:{alternation(prefix_words)})\\.?")
         prefix_symbol = f"(?P<symbol>{'|'.join(prefix_alternatives)})"
         repeated_unit = (
             rf"(?:\s?(?:{alternation(self._symbol_to_currency)})(?P<inflection>{language.money_inflection_pattern}))?"
@@ -126,7 +127,18 @@ class NumberRules:
         self._magnitude = compile_if_any(
             lexicon.magnitudes, lambda names: rf"{NOT_NUMBER_BEFORE}({UNSIGNED_AMOUNT})\s?({names}){NOT_LETTER_AFTER}"
         )
+        self._duration_ahead = compile_if_any(
+            lexicon.duration_words, lambda words: rf"\s*(?:{words}){NOT_LETTER_AFTER}", re.IGNORECASE
+        )
         self._long_digit_run = re.compile(rf"{NOT_NUMBER_BEFORE}\d{{{lexicon.digitwise_min_length},}}{NOT_DIGIT_AFTER}")
+        self._code_after_keyword = compile_if_any(
+            lexicon.digitwise_after,
+            lambda words: (
+                rf"(?<![^\W\d_])(?P<keyword>{words})(?![^\W\d_])"
+                rf"(?P<gap>(?:[\s:#=-]+(?:[^\W\d_]|{_LETTER_MARK})+){{0,2}}?[\s:#=-]+)(?P<number>\d{{4,}}(?:[-/]\d+)*){NOT_DIGIT_AFTER}"
+            ),
+            re.IGNORECASE,
+        )
 
     @staticmethod
     def _map_written_forms(currencies) -> dict:
@@ -144,6 +156,7 @@ class NumberRules:
     def early_rules(self) -> list[Rule]:
         return [
             self.read_star_codes,
+            self.read_codes_after_keywords,
             self.read_card_numbers,
             self.read_scaled_money,
             self.read_year_spans,
@@ -187,6 +200,14 @@ class NumberRules:
         """*123# is read digit by digit with the symbols spoken."""
         return _STAR_CODE.sub(lambda match: spaced(self.language.to_digitwise(match.group())), text)
 
+    def read_codes_after_keywords(self, text: str) -> str:
+        """OTP 482913, PIN: 1234, code is 5678: a number of 4+ digits up to two words after a keyword, digit by digit."""
+        if not self._code_after_keyword:
+            return text
+        return self._code_after_keyword.sub(
+            lambda match: f"{match['keyword']}{match['gap']}{self.language.to_digitwise(match['number'])} ", text
+        )
+
     def read_card_numbers(self, text: str) -> str:
         """1234 5678 9012 3456 is read digit by digit."""
         return _CARD_NUMBER.sub(lambda match: spaced(self.language.to_digitwise(match.group())), text)
@@ -197,8 +218,12 @@ class NumberRules:
             return text
         return self._scaled_money.sub(self._speak_scaled_money, text)
 
+    def _currency_for(self, symbol: str):
+        """'BDT.' is the same currency as 'BDT'."""
+        return self._symbol_to_currency.get(symbol) or self._symbol_to_currency[symbol.rstrip(".")]
+
     def _speak_scaled_money(self, match: re.Match) -> str:
-        currency = self._symbol_to_currency[match["symbol"]]
+        currency = self._currency_for(match["symbol"])
         amount = self.language.spell_scaled_amount(match["amount"])
         return spaced(f"{amount} {match['scale']} {currency.unit_for(2)}")
 
@@ -213,7 +238,7 @@ class NumberRules:
         return spaced(f"{self.language.to_year(first)} {self.language.to_cardinal(second)}")
 
     def read_dates(self, text: str) -> str:
-        """10/05/2024, 10-05-2024, 10.05.2024 and 2024-05-10."""
+        """25/12/2024 and 2024-05-10 with the month name; 2/5/2024 (day and month could swap) as numbers."""
         text = _YEAR_MONTH_DAY.sub(self._speak_year_month_day, text)
         return _DAY_MONTH_YEAR.sub(self._speak_day_month_year, text)
 
@@ -222,10 +247,19 @@ class NumberRules:
         return self._speak_date(parse_int(day), parse_int(month), year) or match.group()
 
     def _speak_day_month_year(self, match: re.Match) -> str:
-        day, _, month, year = match.groups()
-        if len(year) == 2 and (len(day) < 2 or len(month) < 2):
+        day, separator, month, year = match.groups()
+        if len(year) == 2 and (len(day) < 2 or len(month) < 2) and not self._is_short_date(match, separator):
             return match.group()
-        return self._speak_date(parse_int(day), parse_int(month), year) or match.group()
+        first, second = parse_int(day), parse_int(month)
+        if first != second and 1 <= first <= 12 and 1 <= second <= 12:
+            return spaced(self.language.to_numeric_date(first, second, to_ascii_digits(year)))
+        return self._speak_date(first, second, year) or match.group()
+
+    def _is_short_date(self, match: re.Match, separator: str) -> bool:
+        """2/3/24 is a date; 6/12/24 months is a list of terms. 2-3-24 and 2.3.24 stay codes and versions."""
+        if separator != "/":
+            return False
+        return not (self._duration_ahead and self._duration_ahead.match(match.string, match.end()))
 
     def _speak_date(self, day: int, month: int, year: str) -> str | None:
         """Day first, else month first (US). None when neither is a real calendar date."""
@@ -373,7 +407,7 @@ class NumberRules:
         return text
 
     def _speak_money(self, match: re.Match) -> str:
-        currency = self._symbol_to_currency[match["symbol"]]
+        currency = self._currency_for(match["symbol"])
         amount = (match["sign"] or "") + match["amount"]
         inflection = match.groupdict().get("inflection") or ""
         return spaced(self.language.to_money(amount, currency) + inflection)

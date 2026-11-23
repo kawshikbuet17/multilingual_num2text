@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "multilingual-num2text"
-version = "0.1.0"
+version = "0.2.0"
 description = "Convert numbers in text to words: amounts, money, phone numbers, dates, times, codes and more. Bangla and English built in."
 readme = "README.md"
 license = "Apache-2.0"

@@ -50,6 +50,14 @@ LEXICON = Lexicon(
         "°": "ডিগ্রি",
     },
     scale_words=("হাজার", "লাখ", "লক্ষ", "কোটি"),
+    duration_words=(
+        "মাস", "দিন", "বছর", "সপ্তাহ", "কিস্তি", "ঘণ্টা", "মিনিট",
+        "month", "months", "day", "days", "week", "weeks", "year", "years",
+        "installment", "installments", "instalment", "instalments",
+    ),
+    digitwise_after=("OTP", "PIN", "code", "ID", "TrxID", "TxnID", "ওটিপি", "পিন", "কোড", "আইডি", "রেফারেন্স"),
+    sentence_end_marks=("।", "!", "?"),
+    abbreviations=("ডা.", "ড.", "মো.", "মোছা.", "জনাব.", "প্রফে.", "অধ্যা.", "নং.", "ইং.", "খ্রি.", "বি.দ্র."),
     year_markers_after=("সাল", "সন", "খ্রিস্টাব্দ", "খ্রিষ্টাব্দ", "বঙ্গাব্দ", "হিজরি"),
 )
 

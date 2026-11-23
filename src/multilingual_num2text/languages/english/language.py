@@ -10,6 +10,7 @@ from .rules import EnglishRules
 
 class EnglishLanguage(Language):
     code = "en"
+    script = "A-Za-z"
     words = vocab.WORDS
     lexicon = LEXICON
     separate_number_words = True

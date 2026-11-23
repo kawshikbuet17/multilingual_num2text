@@ -7,6 +7,7 @@ from .rules import BANGLA_LETTER, BanglaRules
 
 class BanglaLanguage(Language):
     code = "bn"
+    script = "\u0980-\u09FF"
     words = vocab.WORDS
     lexicon = LEXICON
     money_inflection_pattern = f"{BANGLA_LETTER}*"

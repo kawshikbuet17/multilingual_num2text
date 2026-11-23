@@ -33,6 +33,10 @@ class Lexicon:
     fixed_phrases: written -> spoken, matched case-insensitively ("24/7").
     word_replacements: plain text replacements applied first.
     removed_patterns: regexes deleted before reading (e.g. citation tags like [Source 1]).
+    duration_words: words that make 6/12/24 a list of terms instead of a date (months, মাস ...).
+    digitwise_after: words after which a number of 4+ digits is read digit by digit (OTP, PIN, code ...).
+    sentence_end_marks: marks that end a sentence before a space, for lang="auto" (। . ! ?).
+    abbreviations: words whose dot never ends a sentence (Mr., Dr., e.g., ডা.).
     acronyms / domain_words / email_name_words: how to pronounce those parts.
     """
 
@@ -50,6 +54,10 @@ class Lexicon:
         default_factory=lambda: {"k": 1_000, "K": 1_000, "M": 1_000_000, "bn": 1_000_000_000}
     )
     scale_words: tuple[str, ...] = ()
+    duration_words: tuple[str, ...] = ()
+    digitwise_after: tuple[str, ...] = ()
+    sentence_end_marks: tuple[str, ...] = ()
+    abbreviations: tuple[str, ...] = ()
     year_markers_after: tuple[str, ...] = ()
     year_markers_before: tuple[str, ...] = ()
     digitwise_min_length: int = 10

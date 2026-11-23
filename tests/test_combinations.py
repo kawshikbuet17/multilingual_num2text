@@ -5,7 +5,7 @@ import unittest
 from multilingual_num2text import convert_text
 from test_multilingual_num2text import BANGLA_CASES, ENGLISH_CASES
 
-SEPARATOR = " ; "
+SEPARATOR = " ¦ "
 
 
 def flatten(categories):

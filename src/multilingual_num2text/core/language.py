@@ -31,6 +31,7 @@ class Language(ABC):
     words: Words
     lexicon: Lexicon
     money_inflection_pattern: str = ""
+    script: str = ""
     separate_number_words: bool = False
 
     def __init__(self, lexicon: Lexicon | None = None) -> None:
@@ -137,6 +138,15 @@ class Language(ABC):
             spoken = joiner.join(parts)
 
         return f"{self.words.negative} {spoken}" if is_negative else spoken
+
+    def to_numeric_date(self, first: int, second: int, year: str) -> str:
+        """2/5/2024, where day and month could be either way round: the numbers as written, no month name.
+
+        (2, 5, '2024') -> 'two five twenty twenty-four'. year keeps its written digits.
+        """
+        year_number = parse_int(year)
+        year_words = self.to_year(year_number) if len(year) == 4 else self.to_cardinal(year_number)
+        return f"{self.to_cardinal(first)} {self.to_cardinal(second)} {year_words}"
 
     def to_percent(self, text: str) -> str:
         return f"{self.spell_number(text)} {self.words.percent}"
